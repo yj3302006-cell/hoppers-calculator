@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "Reward": {
+      "title": "Reward",
+      "description": "A reward available for fundraisers based on total amount collected",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the reward" },
+        "description": { "type": "string", "description": "Description of the reward" },
+        "minAmount": { "type": "number", "description": "Minimum amount needed to qualify" },
+        "price": { "type": "number", "description": "Market price of the reward for cash top-up calculation" }
+      },
+      "required": ["name", "minAmount", "price"]
+    },
+    "Bonus": {
+      "title": "Bonus",
+      "description": "A percentage-based bonus/discount for reaching goal milestones",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the bonus" },
+        "description": { "type": "string", "description": "Description of the bonus" },
+        "minPercentage": { "type": "number", "description": "Minimum percentage of goal needed to qualify" }
+      },
+      "required": ["name", "minPercentage"]
+    },
+    "Claim": {
+      "title": "Claim",
+      "description": "A request by a fundraiser to redeem a reward or bonus",
+      "type": "object",
+      "properties": {
+        "fundraiserId": { "type": "string", "description": "ID of the fundraiser group" },
+        "fundraiserName": { "type": "string", "description": "Name of the fundraiser group" },
+        "rewardId": { "type": "string", "description": "ID of the reward/bonus being claimed" },
+        "rewardName": { "type": "string", "description": "Name of the reward/bonus being claimed" },
+        "type": { "type": "string", "enum": ["reward", "bonus"], "description": "Type of claim" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the claim was made" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Current status of the claim" },
+        "paidInCash": { "type": "boolean", "description": "Whether this claim involves a cash top-up" },
+        "amountToPay": { "type": "number", "description": "Amount to pay in cash if applicable" },
+        "uid": { "type": "string", "description": "UID of the user who made the claim" }
+      },
+      "required": ["fundraiserId", "rewardId", "type", "status", "uid"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile and role information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "uid": { "type": "string" }
+      },
+      "required": ["email", "role", "uid"]
+    },
+    "Fundraiser": {
+      "title": "Fundraiser",
+      "description": "A fundraiser group in the campaign",
+      "type": "object",
+      "properties": {
+        "ID": { "type": "string", "description": "Unique ID of the group" },
+        "GroupName": { "type": "string", "description": "Name of the group" },
+        "TotalAmount": { "type": "number", "description": "Total amount collected" },
+        "Goal": { "type": "number", "description": "Goal amount" },
+        "Percentage": { "type": "number", "description": "Percentage of goal reached" }
+      },
+      "required": ["ID", "GroupName", "TotalAmount", "Goal"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application settings",
+      "type": "object",
+      "properties": {
+        "mosadId": { "type": "string", "description": "The active institution ID for the campaign" }
+      },
+      "required": ["mosadId"]
+    }
+  },
+  "firestore": {
+    "rewards": {
+      "schema": "Reward",
+      "description": "Collection of available rewards"
+    },
+    "goalBonuses": {
+      "schema": "Bonus",
+      "description": "Collection of available goal bonuses"
+    },
+    "claims": {
+      "schema": "Claim",
+      "description": "Collection of reward/bonus claims"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "fundraisers": {
+      "schema": "Fundraiser",
+      "description": "Collection of fundraiser groups"
+    },
+    "settings": {
+      "schema": "Settings",
+      "description": "Global settings document"
+    }
+  }
+}

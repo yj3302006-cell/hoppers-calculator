@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: rewards
+    // Fields: name (string), description (string), minAmount (number), price (number)
+    //
+    // Collection: goalBonuses
+    // Fields: name (string), description (string), minPercentage (number)
+    //
+    // Collection: claims
+    // Fields: fundraiserId (string), fundraiserName (string), rewardId (string), 
+    //         rewardName (string), type (string: reward|bonus), timestamp (timestamp), 
+    //         status (string: pending|approved|rejected), paidInCash (bool), 
+    //         amountToPay (number), uid (string)
+    //
+    // Collection: users
+    // Fields: email (string), displayName (string), role (string: admin|user), uid (string)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((request.auth.token.email == "yj3302006@gmail.com" && request.auth.token.email_verified == true) ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidReward(data) {
+      return hasRequiredFields(['name', 'minAmount', 'price']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+        data.minAmount is number && data.minAmount >= 0 &&
+        data.price is number && data.price >= 0;
+    }
+
+    function isValidBonus(data) {
+      return hasRequiredFields(['name', 'minPercentage']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+        data.minPercentage is number && data.minPercentage >= 0 && data.minPercentage <= 100;
+    }
+
+    function isValidClaim(data) {
+      return hasRequiredFields(['fundraiserId', 'rewardId', 'type', 'status', 'uid']) &&
+        data.type in ['reward', 'bonus'] &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        data.fundraiserId is string && data.fundraiserId.size() > 0 && data.fundraiserId.size() < 100 &&
+        data.rewardId is string && data.rewardId.size() > 0 && data.rewardId.size() < 100 &&
+        data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['email', 'role', 'uid']) &&
+        data.email is string && data.email.size() > 0 && data.email.size() < 200 &&
+        data.role in ['admin', 'user'] &&
+        data.uid is string && data.uid.size() > 0 && data.uid.size() < 100;
+    }
+
+    function isValidFundraiser(data) {
+      return hasRequiredFields(['ID', 'GroupName', 'TotalAmount', 'Goal']) &&
+        data.ID is string && data.ID.size() > 0 && data.ID.size() < 100 &&
+        data.GroupName is string && data.GroupName.size() > 0 && data.GroupName.size() < 200 &&
+        data.TotalAmount is number &&
+        data.Goal is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /rewards/{rewardId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidReward(request.resource.data);
+    }
+
+    match /goalBonuses/{bonusId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidBonus(request.resource.data);
+    }
+
+    match /claims/{claimId} {
+      allow read: if isAdmin() || isDocOwner();
+      allow create: if isAuthenticated() && isValidClaim(request.resource.data) && request.resource.data.uid == request.auth.uid;
+      allow update: if isAdmin() && isValidClaim(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && request.resource.data.role == 'user' && request.resource.data.uid == request.auth.uid;
+      allow update: if isAdmin() && isValidUser(request.resource.data);
+    }
+
+    match /fundraisers/{fundraiserId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidFundraiser(request.resource.data);
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
