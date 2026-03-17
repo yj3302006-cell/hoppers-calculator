@@ -206,50 +206,7 @@ export default function Admin() {
       if (result.success) {
         setCampaignData(result);
       }
-    } catch (e: any) {
-      console.error("Failed to fetch campaign data for AI", e);
-    }
-  };
-
-  const testNedarimConnection = async () => {
-    if (!mosadId) {
-      setConfirmModal({
-        title: "שגיאה",
-        message: "נא להזין קוד מוסד תחילה.",
-        onConfirm: () => setConfirmModal(null)
-      });
-      return;
-    }
-    
-    setSavingSettings(true);
-    try {
-      const res = await fetch(`/api/campaign/${mosadId.trim()}`);
-      const data = await res.json();
-      
-      if (data.success) {
-        setConfirmModal({
-          title: "חיבור הצליח!",
-          message: `החיבור לנדרים פלוס תקין. נמצא קמפיין: ${data.campaign?.CampaignName || "ללא שם"}. נמצאו ${data.groups?.length || 0} מתרימים.`,
-          onConfirm: () => setConfirmModal(null)
-        });
-      } else {
-        setConfirmModal({
-          title: "חיבור נכשל",
-          message: data.error || "לא נמצאו נתונים עבור קוד מוסד זה.",
-          danger: true,
-          onConfirm: () => setConfirmModal(null)
-        });
-      }
-    } catch (err) {
-      setConfirmModal({
-        title: "שגיאת תקשורת",
-        message: "אירעה שגיאה בחיבור לשרת.",
-        danger: true,
-        onConfirm: () => setConfirmModal(null)
-      });
-    } finally {
-      setSavingSettings(false);
-    }
+    } catch (e: any) {    }
   };
 
   const handleSaveSettings = async () => {
